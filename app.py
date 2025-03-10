@@ -10,6 +10,10 @@ db = mysql.connector.connect(
     password="devu",
     database="trade_data"
 )
+# Route to serve the map.html page
+@app.route('/')
+def index():
+    return render_template('map.html')  # Now linked to map.html
 
 @app.route('/data', methods=['GET'])
 def get_data():
