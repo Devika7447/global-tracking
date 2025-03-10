@@ -14,12 +14,19 @@ function initMap() {
 
     // Fetch data from Flask API
     fetch("http://127.0.0.1:5000/data") // Ensure Flask is running
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok " + response.statusText);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log("Fetched Data:", data); // Debugging
+
             data.forEach(function (point) {
                 let lat = parseFloat(point.latitude);
                 let lng = parseFloat(point.longitude);
-                let exports = parseInt(point["no_of_exports"]);  // Ensure correct key names
+                let exports = parseInt(point["no_of_exports"]);
                 let imports = parseInt(point["no_of_imports"]);
                 let mode = point["mode_of_transportation"];
 
@@ -68,10 +75,5 @@ function initMap() {
         });
 }
 
-// Function to determine color dynamically (if needed)
-function getColor(value) {
-    if (value > 1000000) return "#ff0000";
-    if (value > 500000) return "#ff8000";
-    if (value > 100000) return "#ffff00";
-    return "#00ff00";
-}
+// Load the map when the page is loaded
+window.onload = initMap;
