@@ -75,5 +75,5 @@ function initMap() {
         });
 }
 
-// Load the map when the page is loaded
-window.onload = initMap;
+// Ensure initMap is globally accessible
+window.initMap = initMap;
