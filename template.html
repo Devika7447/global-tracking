@@ -15,7 +15,7 @@ db = mysql.connector.connect(
 
 @app.route('/')
 def index():
-    return render_template('index.html')  # Frontend with Google Maps
+    return render_template('template.html')  # Frontend with Google Maps
 
 @app.route('/data', methods=['GET'])
 def get_data():
