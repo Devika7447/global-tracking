@@ -5,54 +5,73 @@ function initMap() {
         center: { lat: 20, lng: 0 }
     });
 
-    fetch('/data')  // Get trade data from Flask API
+    // Define colors for each transport mode
+    const colors = {
+        "Sea Route": "#FF0000",  // Red for Sea Route
+        "Road Way": "#FFA500",    // Orange for Roadway
+        "Air Way": "#8F00FF"      // Purple for Airway
+    };
+
+    // Fetch data from Flask API
+    fetch("http://127.0.0.1:5000/data") // Ensure Flask is running
         .then(response => response.json())
         .then(data => {
-            data.forEach(country => {
-                let countryCode = country.country_code;
-                let tradeValue = country.trade_value;
+            data.forEach(function (point) {
+                let lat = parseFloat(point.latitude);
+                let lng = parseFloat(point.longitude);
+                let exports = parseInt(point["no_of_exports"]);  // Ensure correct key names
+                let imports = parseInt(point["no_of_imports"]);
+                let mode = point["mode_of_transportation"];
 
-                // Fetch country geometry from a GeoJSON source
-                fetch(`https://raw.githubusercontent.com/johan/world.geo.json/master/countries/${countryCode}.geo.json`)
-                    .then(response => response.json())
-                    .then(geojson => {
-                        let color = getColor(tradeValue);
+                // Validate coordinates
+                if (isNaN(lat) || isNaN(lng)) {
+                    console.error("Invalid coordinates:", point);
+                    return;
+                }
 
-                        let countryLayer = new google.maps.Data({ map: map });
-                        countryLayer.addGeoJson(geojson);
+                // Set bubble radius (increased for better visibility)
+                let radius = Math.sqrt(exports) * 8000;
 
-                        // Apply Choropleth styling
-                        countryLayer.setStyle({
-                            fillColor: color,
-                            strokeWeight: 1,
-                            fillOpacity: 0.7
-                        });
+                // Set color based on transport mode
+                let color = colors[mode] || "#000000"; // Default black if mode is unknown
 
-                        // Tooltip on hover
-                        countryLayer.addListener('mouseover', function(event) {
-                            map.data.revertStyle();
-                            map.data.overrideStyle(event.feature, {
-                                strokeWeight: 2,
-                                fillOpacity: 1
-                            });
-                        });
+                // Create a circle for each transport mode
+                var circle = new google.maps.Circle({
+                    strokeColor: color,
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: color,
+                    fillOpacity: 0.4,  
+                    map: map,
+                    center: { lat: lat, lng: lng },
+                    radius: radius
+                });
 
-                        // Reset style on mouse out
-                        countryLayer.addListener('mouseout', function() {
-                            map.data.revertStyle();
-                        });
-                    });
+                // Create an info window for the bubble
+                var infoWindow = new google.maps.InfoWindow({
+                    content: `<strong>${point.port_name} (${point.country})</strong><br>
+                              Mode: <b style="color:${color}">${mode}</b><br>
+                              Exports: ${exports}<br>
+                              Imports: ${imports}`
+                });
+
+                // Show info window on click
+                circle.addListener('click', function () {
+                    infoWindow.setPosition(circle.getCenter());
+                    infoWindow.open(map);
+                });
             });
+        })
+        .catch(error => {
+            console.error("Error fetching data:", error);
+            document.getElementById('error').innerText = "Failed to load data. Ensure Flask is running.";
         });
 }
 
-// Define color ranges based on trade value
+// Function to determine color dynamically (if needed)
 function getColor(value) {
-    return value > 1000000 ? "#ff0000" :
-           value > 500000  ? "#ff8000" :
-           value > 100000  ? "#ffff00" :
-                             "#00ff00";
+    if (value > 1000000) return "#ff0000";
+    if (value > 500000) return "#ff8000";
+    if (value > 100000) return "#ffff00";
+    return "#00ff00";
 }
-
-// Load map after page loads
-window.onload = initMap;
