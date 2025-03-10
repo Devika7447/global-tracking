@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Data Map</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAn26BQp0B0jB_iY6HbhoxT_pqAvQFKFgw"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/geojson/0.5.0/geojson.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <style>
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Interactive Trade Data Map</h2>
+    <div id="map"></div>
+</body>
+</html>
