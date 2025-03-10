@@ -1,24 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trade Data Map</title>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAn26BQp0B0jB_iY6HbhoxT_pqAvQFKFgw&callback=initMap"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/geojson/0.5.0/geojson.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <title>Google Maps Bubble Chart</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAn26BQp0B0jB_iY6HbhoxT_pqAvQFKFgw"></script>
+    <script>
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 2,
+                center: { lat: 20, lng: 0 }
+            });
 
-   
+            // Define colors for each transport mode
+            const colors = {
+                "Sea Route": "#FF0000",  // Red for Sea Route
+                "Road Way": "#FFA500",    // Orange for Roadway
+                "Air Way": "#8F00FF"      // Purple for Airway
+            };
 
-    <style>
-        #map {
-            width: 100%;
-            height: 600px;
+            // Fetch data from Flask API
+            fetch("http://127.0.0.1:5000/data") // Ensure Flask is running
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(function (point) {
+                        let lat = parseFloat(point.latitude);
+                        let lng = parseFloat(point.longitude);
+                        let exports = parseInt(point["no_of_exports"]);  
+                        let imports = parseInt(point["no_of_imports"]);
+                        let mode = point["mode_of_transportation"];
+
+                        // Validate coordinates
+                        if (isNaN(lat) || isNaN(lng)) {
+                            console.error("Invalid coordinates:", point);
+                            return;
+                        }
+
+                        // Set bubble radius (scaled up for visibility)
+                        let radius = Math.sqrt(exports) * 8000;
+
+                        // Set color based on transport mode (default to black if unknown)
+                        let color = colors[mode] || "#000000"; 
+
+                        // Create a circle for each transport mode
+                        var circle = new google.maps.Circle({
+                            strokeColor: color,
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillColor: color,
+                            fillOpacity: 0.4,  
+                            map: map,
+                            center: { lat: lat, lng: lng },
+                            radius: radius
+                        });
+
+                        // Create an info window for the bubble
+                        var infoWindow = new google.maps.InfoWindow({
+                            content: `<strong>${point.port_name} (${point.country})</strong><br>
+                                      Mode: <b style="color:${color}">${mode}</b><br>
+                                      Exports: ${exports}<br>
+                                      Imports: ${imports}`
+                        });
+
+                        // Show info window on click
+                        circle.addListener('click', function () {
+                            infoWindow.setPosition(circle.getCenter());
+                            infoWindow.open(map);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                    document.getElementById('error').innerText = "Failed to load data. Ensure Flask is running.";
+                });
         }
-    </style>
+    </script>
 </head>
-<body>
-    <h2>Interactive Trade Data Map</h2>
-    <div id="map" style="height: 500px; width: 100%;"></div>
+
+<body onload="initMap()">
+    <h2 style="text-align: center; font-size: 40px; font-weight: bold;">GLOBAL <span
+            style="color: blue;">TRACKING</span></h2>
+    <a href="http://127.0.0.1:8088/superset/dashboard/p/pDJoXN30xd4/" target="_blank"
+       style="display: inline-block; padding: 10px 20px; background-color: #004d00; 
+       color: white; text-decoration: none; font-size: 16px; 
+       border-radius: 5px; margin-bottom: 10px;">
+        View Dashboard
+    </a>
+    <div id="map" style="height: 690px; width: 100%;"></div>
+    <p id="error" style="color: rgb(179, 15, 34);"></p> 
 </body>
+
 </html>
