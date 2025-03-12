@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Google Maps - Marker Clustering & Time-Based Trade Routes</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAn26BQp0B0jB_iY6HbhoxT_pqAvQFKFgw&libraries=visualization"></script>
+    <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+
+    <script>
+        function initClusterMap() {
+            var clusterMap = new google.maps.Map(document.getElementById("clusterMap"), {
+                zoom: 2,
+                center: { lat: 20, lng: 0 }
+            });
+
+            var markers = [];
+
+            fetch("http://127.0.0.1:5000/data") // Fetch port data
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(point => {
+                        let marker = new google.maps.Marker({
+                            position: { lat: parseFloat(point.latitude), lng: parseFloat(point.longitude) },
+                            title: point.port_name
+                        });
+                        markers.push(marker);
+                    });
+
+                    // Apply clustering
+                    new MarkerClusterer(clusterMap, markers, {
+                        imagePath: "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m"
+                    });
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+
+        function initTimeMap() {
+            var timeMap = new google.maps.Map(document.getElementById("timeMap"), {
+                zoom: 3,
+                center: { lat: 20, lng: 0 }
+            });
+
+            fetch("http://127.0.0.1:5000/trade_routes") // Fetch trade route data
+                .then(response => response.json())
+                .then(data => {
+                    let routeCoords = [];
+                    
+                    data.forEach(point => {
+                        routeCoords.push({
+                            lat: parseFloat(point.latitude),
+                            lng: parseFloat(point.longitude)
+                        });
+                    });
+
+                    let tradePath = new google.maps.Polyline({
+                        path: routeCoords,
+                        geodesic: true,
+                        strokeColor: "#FF5733",
+                        strokeOpacity: 1.0,
+                        strokeWeight: 4
+                    });
+
+                    tradePath.setMap(timeMap);
+
+                    let marker = new google.maps.Marker({
+                        position: routeCoords[0],
+                        map: timeMap
+                    });
+
+                    let index = 0;
+                    function animateMarker() {
+                        if (index < routeCoords.length) {
+                            marker.setPosition(routeCoords[index]);
+                            index++;
+                            setTimeout(animateMarker, 1000);
+                        }
+                    }
+                    animateMarker();
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+    </script>
+</head>
+
+<body onload="initClusterMap(); initTimeMap();">
+    <h2 style="text-align: center;">Global Port Marker Clustering</h2>
+    <div id="clusterMap" style="height: 500px; width: 100%;"></div>
+    
+    <h2 style="text-align: center; margin-top: 40px;">Time-Based Trade Route Animation</h2>
+    <div id="timeMap" style="height: 500px; width: 100%;"></div>
+</body>
+
+</html>
