@@ -16,7 +16,7 @@ db = mysql.connector.connect(
 # Route to serve the map.html page
 @app.route('/')
 def index():
-    return render_template('map.html')  # Now linked to map.html
+    return render_template('index.html')  # Now linked to map.html
 
 # API route to fetch data from the database
 @app.route('/data', methods=['GET'])
