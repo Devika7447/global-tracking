@@ -19,7 +19,7 @@ Global Tracking is a data visualization project that integrates SQL databases, G
 ## Installation & Setup 🔧
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/global-tracking.git
+git clone https://github.com/Devika7447/global-tracking.git
 cd global-tracking
 
 # Set up the SQL database
